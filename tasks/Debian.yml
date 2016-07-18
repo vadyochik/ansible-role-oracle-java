@@ -1,0 +1,32 @@
+---
+
+- name: Erase openjdk java packages
+  apt: name=openjdk-* state=absent purge=yes
+  when: oracle_java_no_openjdk is defined and oracle_java_no_openjdk
+
+- name: Add Java PPA
+  apt_repository: repo=ppa:webupd8team/java state=present
+  sudo: yes
+
+- name: set java_packages to locally downloaded rpm from official site
+  set_fact:
+    java_packages:
+      - "oracle-java{{ orcale_java_version }}-installer"
+      - "oracle-java{{ orcale_java_version }}-set-default"
+  when: orcale_java_version is defined and orcale_java_version|int >= 7
+
+- name: Check if Java license is accepted
+  shell: '/usr/bin/debconf-get-selections | grep oracle-java{{ orcale_java_version }}-installer'
+  sudo: yes
+  register: java_license_check
+  changed_when: java_license_check.rc != 0
+  failed_when: java_license_check.rc > 1
+
+- name: Automatically accept Java license
+  shell: 'echo oracle-java{{ orcale_java_version }}-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections'
+  sudo: yes
+  when: java_license_check.rc != 0
+
+- name: Install Java packages
+  apt: pkg='{{ item }}' state=present update_cache=yes force=yes
+  with_items: java_packages

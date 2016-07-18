@@ -1,0 +1,23 @@
+---
+- name: Erase openjdk java packages
+  yum: name=java-*-openjdk* state=absent
+  when: oracle_java_no_openjdk is defined and oracle_java_no_openjdk
+
+- name: Ensure curl is installed.
+  yum: name=curl state=installed
+  when: orcale_java_version is defined and orcale_java_version == "latest"
+
+- name: Downloading latest java version
+  command: creates="/usr/local/src/{{ orcale_java_rpm_file }}" curl -v -j -k -L -H "{{ oracle_java_download_cookie }}" "{{ orcale_java_download_url }}" -o "/usr/local/src/{{ orcale_java_rpm_file }}"
+  register: latest_java_rpm_file
+  when: orcale_java_version is defined and orcale_java_version == "latest"
+
+- name: set java_packages to locally downloaded rpm from official site
+  set_fact:
+    java_packages: "/usr/local/src/{{ orcale_java_rpm_file }}"
+  when: orcale_java_version is defined and orcale_java_version == "latest"
+
+- name: Ensure Java is installed.
+  yum: "name={{ item }} state=installed"
+  with_items: java_packages
+

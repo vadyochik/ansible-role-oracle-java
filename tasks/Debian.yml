@@ -1,32 +1,60 @@
 ---
-
 - name: Erase openjdk java packages
-  apt: name=openjdk-* state=absent purge=yes
-  when: oracle_java_no_openjdk is defined and oracle_java_no_openjdk
+  apt:
+    name: "openjdk-*"
+    state: "absent"
+    purge: yes
+  when: oracle_java_remove_openjdk
 
-- name: Add Java PPA
-  apt_repository: repo=ppa:webupd8team/java state=present
-  sudo: yes
+- name: Add Java PPA (Ubuntu)
+  apt_repository:
+    repo: "ppa:webupd8team/java"
+    state: "present"
+  when: ansible_distribution == 'Ubuntu'
 
-- name: set java_packages to locally downloaded rpm from official site
-  set_fact:
-    java_packages:
-      - "oracle-java{{ orcale_java_version }}-installer"
-      - "oracle-java{{ orcale_java_version }}-set-default"
-  when: orcale_java_version is defined and orcale_java_version|int >= 7
+- name: Add Java PPA (Debian jessie)
+  apt_repository:
+    repo: "deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main"
+    filename: "webupd8team-java-jessie"
+    state: present
+  when: ansible_distribution == 'Debian' and ansible_distribution_release == 'jessie'
+
+- name: Add Java PPA (Debian wheezy)
+  apt_repository:
+    repo: "deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main"
+    filename: "webupd8team-java-wheezy"
+    state: present
+  when: ansible_distribution == 'Debian' and ansible_distribution_release == 'wheezy'
 
 - name: Check if Java license is accepted
-  shell: '/usr/bin/debconf-get-selections | grep oracle-java{{ orcale_java_version }}-installer'
-  sudo: yes
+  shell: "/usr/bin/debconf-get-selections | grep oracle-java{{ orcale_java_version }}-installer"
   register: java_license_check
   changed_when: java_license_check.rc != 0
   failed_when: java_license_check.rc > 1
 
 - name: Automatically accept Java license
-  shell: 'echo oracle-java{{ orcale_java_version }}-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections'
-  sudo: yes
+  shell: "echo oracle-java{{ orcale_java_version }}-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections"
   when: java_license_check.rc != 0
 
-- name: Install Java packages
-  apt: pkg='{{ item }}' state=present update_cache=yes force=yes
-  with_items: java_packages
+- name: Install Oracle Java(TM) Development Kit package
+  apt:
+    pkg: "oracle-java{{ orcale_java_version }}-installer"
+    state: "present"
+    update_cache: yes
+    force: yes
+
+- name: Install Unlimited JCE Policy for Oracle Java package
+  apt:
+    pkg: "oracle-java{{ orcale_java_version }}-unlimited-jce-policy"
+    state: "present"
+    update_cache: yes
+    force: yes
+  when: orcale_java_unlimited_jce_policy
+
+- name: Install a package to set Oracle JDK as default Java
+  apt:
+    pkg: "oracle-java{{ orcale_java_version }}-set-default"
+    state: "present"
+    update_cache: yes
+    force: yes
+  when: orcale_java_set_default

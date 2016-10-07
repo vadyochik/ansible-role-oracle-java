@@ -1,6 +1,11 @@
 ---
-oracle_java_no_openjdk: true
-orcale_java_version: "latest"
+orcale_java_version: 8
+orcale_java_set_default: no
+orcale_java_unlimited_jce_policy: no
+oracle_java_remove_openjdk: no
+
+## needs to be checked further:
+##orcale_java_version: "latest"
 # Possible orcale_java_product values are "jdk"|"jre"|"server-jre"
 orcale_java_product: "jdk"
 orcale_java_download_url: "http://download.oracle.com/otn-pub/java/jdk/8u45-b14/{{ orcale_java_product }}-8u45-linux-x64.rpm"

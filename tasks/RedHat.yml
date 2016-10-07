@@ -1,7 +1,7 @@
 ---
 - name: Erase openjdk java packages
   yum: name=java-*-openjdk* state=absent
-  when: oracle_java_no_openjdk is defined and oracle_java_no_openjdk
+  when: oracle_java_remove_openjdk
 
 - name: Ensure curl is installed.
   yum: name=curl state=installed

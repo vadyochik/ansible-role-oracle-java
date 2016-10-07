@@ -1,3 +1,0 @@
-orcale_java_version: 8
-__java_packages:
-  - "openjdk-{{ orcale_java_version }}-{{ orcale_java_product }}"
